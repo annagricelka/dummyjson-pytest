@@ -2,9 +2,13 @@ name: API tests
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - pytest
   pull_request:
-  # расписание: каждый день в 06:00 UTC (в Варшаве будет +- 07:00/08:00 в зависимости от сезона)
+    branches:
+      - main
+      - pytest
   schedule:
     - cron: "0 6 * * *"
 
