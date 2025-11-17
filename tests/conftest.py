@@ -1,22 +1,47 @@
-import os
+# tests/conftest.py
+
 import pytest
 import requests
-from dotenv import load_dotenv
 
-# Подгружаем переменные из .env (если есть)
-load_dotenv()
+BASE_URL = "https://dummyjson.com"
 
-# Твой API-эндпоинт
-BASE_URL = os.getenv("BASE_URL", "http://dashboard-bm-eu-stage1.bidmachine.io/api/sellers/json")
 
 @pytest.fixture(scope="session")
 def base_url():
-    """Базовый URL API"""
+    """Базовый URL для всех запросов."""
     return BASE_URL
 
+
 @pytest.fixture(scope="session")
-def http():
-    """HTTP-сессия для всех запросов"""
-    s = requests.Session()
-    s.headers.update({"Accept": "application/json"})
-    return s
+def auth_token(base_url):
+    """
+    Логинится на /auth/login и возвращает accessToken.
+    Используем пользователя из документации DummyJSON.
+    """
+    login_payload = {
+        "username": "emilys",
+        "password": "emilyspass",
+        # "expiresInMins": 30  # можно добавить, но не обязательно
+    }
+
+    response = requests.post(f"{base_url}/auth/login", json=login_payload)
+    # если код не 2xx — выбросит исключение и сразу покажет ошибку
+    response.raise_for_status()
+
+    data = response.json()
+    token = data.get("accessToken")
+
+    assert token, "В ответе на /auth/login нет accessToken"
+
+    return token
+
+
+@pytest.fixture
+def auth_headers(auth_token):
+    """
+    Заголовки с Authorization для запросов,
+    где нужна авторизация.
+    """
+    return {
+        "Authorization": f"Bearer {auth_token}"
+    }
